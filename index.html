@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Recorder</title>
+</head>
+<body>
+    <h2>Voice Recorder</h2>
+    <button id="start-record">Start Recording</button>
+    <button id="stop-record" disabled>Stop Recording</button>
+    <button id="save-recording" disabled>Save as MP3</button>
+    <audio id="audio-playback" controls style="display: none;"></audio>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob;
+        let audioUrl;
+        
+        // Start recording
+        document.getElementById('start-record').onclick = async () => {
+            // Request microphone access
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            
+            // Enable stop button
+            document.getElementById('stop-record').disabled = false;
+            document.getElementById('start-record').disabled = true;
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                audioUrl = URL.createObjectURL(audioBlob);
+                const audioPlayback = document.getElementById('audio-playback');
+                audioPlayback.src = audioUrl;
+                audioPlayback.style.display = 'block';
+                document.getElementById('save-recording').disabled = false;
+            };
+
+            mediaRecorder.start();
+        };
+
+        // Stop recording
+        document.getElementById('stop-record').onclick = () => {
+            mediaRecorder.stop();
+            document.getElementById('stop-record').disabled = true;
+            document.getElementById('start-record').disabled = false;
+        };
+
+        // Save as MP3
+        document.getElementById('save-recording').onclick = () => {
+            const a = document.createElement('a');
+            a.href = audioUrl;
+            a.download = 'recording.mp3';
+            a.click();
+        };
+    </script>
+</body>
+</html>
